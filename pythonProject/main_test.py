@@ -365,7 +365,7 @@ note_data = [
     for i in range(180)  # 持續 30 秒
 ]
 # 樂譜初始化
-score = Score('pythonProject/test.mp3', note_data, 'pythonProject/note.png')
+score = Score('test.mp3', note_data, 'note.png')
 score.load_music()
 score.start_music()
 # 按鍵對應的 X 位置
@@ -386,7 +386,7 @@ hitCircleEffectManager = HitCircleEffectManager()
 #ComboEffectManager創建
 comboEffectManager = ComboEffectManager(font)
 # 創建判定線
-judgment_line = JudgmentLine('pythonProject/note.png')
+judgment_line = JudgmentLine('note.png')
 #note_manager創建
 note_manager = NoteManager(note_positions, score.scaled_image,hit_result_manager,hitCircleEffectManager,comboEffectManager) 
 # 分數
@@ -394,7 +394,7 @@ score_value = 0
 #score_font創建
 score_font = Score_Font(font_size=36, font_color=WHITE, position=(WIDTH - 10, 10))
 # 按鍵音效
-hit_sounds = pygame.mixer.Sound('pythonProject/pop.mp3')
+hit_sounds = pygame.mixer.Sound('pop.mp3')
 # SoundManager創建
 soundManager = SoundManager(hit_sounds)
 ####----------------------------------------------初始化-----------------------
