@@ -414,12 +414,19 @@ class menu:
         RED = (255, 0, 0)
         countdown_time = 3  # 從 3 開始倒數
 
+        # 加載倒數音效
+        countdown_sound = pygame.mixer.Sound('countdown.mp3')
+
         for i in range(countdown_time, 0, -1):
             screen.fill((0, 0, 0))  # 清空畫面
             countdown_text = FONT.render(str(i), True, RED)
             countdown_rect = countdown_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
             screen.blit(countdown_text, countdown_rect)
             pygame.display.flip()
+
+             # 播放音效
+            countdown_sound.play()
+
             pygame.time.wait(1000)  # 等待 1 秒
 
         # 倒數結束，開始遊戲
