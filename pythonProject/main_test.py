@@ -338,6 +338,76 @@ class SoundManager:
         if current_time - self.last_played >= 100:
             self.sound.play()
             self.last_played = current_time
+class menu:
+    # 創建按鈕函數
+    @staticmethod
+    def create_button(screen, text, x, y, width, height, color, hover_color):
+        FONT = pygame.font.Font(None, 36)
+        # 顏色定義
+        BLACK = (0, 0, 0)
+        mouse_pos = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+
+        # 檢測滑鼠是否在按鈕範圍內
+        if x < mouse_pos[0] < x + width and y < mouse_pos[1] < y + height:
+            pygame.draw.rect(screen, hover_color, (x, y, width, height))
+            if click[0] == 1:  # 滑鼠左鍵被按下
+                return True
+        else:
+            pygame.draw.rect(screen, color, (x, y, width, height))
+
+        # 畫出按鈕文字
+        text_surface = FONT.render(text, True, BLACK)
+        text_rect = text_surface.get_rect(center=(x + width // 2, y + height // 2))
+        screen.blit(text_surface, text_rect)
+        return False
+
+    # 開始介面函數
+    @staticmethod
+    def show_start_menu():
+        FONT = pygame.font.Font(None, 36)
+        # 顏色定義
+        WHITE = (255, 255, 255)
+        BLUE = (70, 130, 180)
+        GRAY = (200, 200, 200)
+        WIDTH, HEIGHT = 900, 600  # 設定畫面大小
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Start Menu")
+
+        clock = pygame.time.Clock()
+        running = True
+
+        # 難度選擇
+        difficulty = "Easy"  # 預設難度
+
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:  # 處理關閉窗口事件
+                    pygame.quit()
+                    return None
+
+            screen.fill(WHITE)
+
+            # 標題
+            title_surface = FONT.render("Rhythm Game", True, BLUE)
+            title_rect = title_surface.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+            screen.blit(title_surface, title_rect)
+
+            # 開始遊戲按鈕
+            if menu.create_button(screen, "Start Game", WIDTH // 2 - 100, HEIGHT // 2, 200, 50, GRAY, BLUE):
+                return difficulty
+
+            # 難度按鈕
+            if menu.create_button(screen, "Easy", WIDTH // 2 - 150, HEIGHT // 2 + 100, 100, 50, GRAY, BLUE):
+                difficulty = "Easy"
+            if menu.create_button(screen, "Medium", WIDTH // 2 - 50, HEIGHT // 2 + 100, 100, 50, GRAY, BLUE):
+                difficulty = "Medium"
+            if menu.create_button(screen, "Hard", WIDTH // 2 + 50, HEIGHT // 2 + 100, 100, 50, GRAY, BLUE):
+                difficulty = "Hard"
+
+            # 更新畫面
+            pygame.display.flip()
+            clock.tick(30)
         
 #------------------------------------------------------------------
 # 初始化 Pygame
@@ -356,6 +426,9 @@ BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
+
+selected_difficulty = menu.show_start_menu()
+
 # 時鐘控制
 clock = pygame.time.Clock()
 FPS = 120
