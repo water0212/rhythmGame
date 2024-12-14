@@ -451,8 +451,10 @@ GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 
+start_sound = pygame.mixer.Sound('start.mp3')
 selected_difficulty = menu.show_start_menu()
 menu.start_countdown(screen, WIDTH, HEIGHT)
+start_sound.play()
 
 # 時鐘控制
 clock = pygame.time.Clock()
