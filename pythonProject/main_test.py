@@ -365,14 +365,13 @@ class menu:
     # 開始介面函數
     @staticmethod
     def show_start_menu():
-        FONT = pygame.font.Font(None, 36)
+        FONT = pygame.font.Font(None, 50)
         # 顏色定義
         WHITE = (255, 255, 255)
         BLUE = (70, 130, 180)
         GRAY = (200, 200, 200)
         WIDTH, HEIGHT = 900, 600  # 設定畫面大小
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Start Menu")
 
         clock = pygame.time.Clock()
         running = True
@@ -408,7 +407,25 @@ class menu:
             # 更新畫面
             pygame.display.flip()
             clock.tick(30)
-        
+    # 新增倒數計時函數
+    @staticmethod
+    def start_countdown(screen, WIDTH, HEIGHT):
+        FONT = pygame.font.Font(None, 150)
+        RED = (255, 0, 0)
+        countdown_time = 3  # 從 3 開始倒數
+
+        for i in range(countdown_time, 0, -1):
+            screen.fill((0, 0, 0))  # 清空畫面
+            countdown_text = FONT.render(str(i), True, RED)
+            countdown_rect = countdown_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+            screen.blit(countdown_text, countdown_rect)
+            pygame.display.flip()
+            pygame.time.wait(1000)  # 等待 1 秒
+
+        # 倒數結束，開始遊戲
+        screen.fill((0, 0, 0))  # 清空畫面
+        pygame.display.flip()
+        pygame.time.wait(500)  # 等待 0.5 秒，準備開始遊戲
 #------------------------------------------------------------------
 # 初始化 Pygame
 
@@ -428,6 +445,7 @@ YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 
 selected_difficulty = menu.show_start_menu()
+menu.start_countdown(screen, WIDTH, HEIGHT)
 
 # 時鐘控制
 clock = pygame.time.Clock()
