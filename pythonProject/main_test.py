@@ -1,6 +1,5 @@
 import pygame
-import random
-
+import copy
 class Score:
     def __init__(self, music_path, note_data, note_image_path):
         """ 初始化樂譜物件
@@ -20,6 +19,15 @@ class Score:
     def start_music(self):
         """ 開始播放音樂 """
         pygame.mixer.music.play()
+    def pause_music(self):
+        """暫停音樂"""
+        pygame.mixer.music.pause()
+    def unpause_music(self):
+        """繼續撥放音樂"""
+        pygame.mixer.music.unpause()
+    def End_music(self):
+        """卸載音樂"""
+        pygame.mixer.music.unload()
 class Note:
     def __init__(self, x, y, speed, image):
         """ 初始化音符物件
@@ -56,6 +64,9 @@ class NoteManager:
         self.key_mapping = ['D', 'F', 'J', 'K'] #對應0 1 2 3
         self.note_positions = note_positions
         self.note_image = note_images
+        self.hit_result_manager = hit_result_manager
+        self.hitCircleEffectManager = hitCircleEffectManager
+        self.comboEffectManager = comboEffectManager
     def input_note(self, note_time, position, speed):
         """在指定時間點，將音符插入對應的位置
         note_time: 音符出現的時間
@@ -73,7 +84,7 @@ class NoteManager:
             for note in column:
                 note.update()
                 if note.y > HEIGHT:  # 如果音符超出螢幕範圍，則刪除
-                    comboEffectManager.reset_combo()
+                    self.comboEffectManager.reset_combo()
                     column.remove(note)
     def draw_notes(self, screen):
         for column in self.note_columns.values():
@@ -90,20 +101,20 @@ class NoteManager:
                 if result == 'perfect':
                     score += 10  # 完美命中
                     color = (0, 255, 0)
-                    comboEffectManager.increase_combo()
+                    self.comboEffectManager.increase_combo()
                 elif result == 'great':
                     score += 5  # 很好命中
                     color = (255, 255, 0)
-                    comboEffectManager.increase_combo()
+                    self.comboEffectManager.increase_combo()
                 elif result == 'miss':
                     score += 0  # 錯過
                     color = (255, 0, 0)
-                    comboEffectManager.reset_combo()
+                    self.comboEffectManager.reset_combo()
                 else :
                     return -1
                 self.note_columns[column].remove(note)
-                hit_result_manager.add_result(result, (100, 100), color)
-                hitCircleEffectManager.add_effect((self.note_positions[key_index],note.y),YELLOW)
+                self.hit_result_manager.add_result(result, (100, 100), color)
+                self.hitCircleEffectManager.add_effect((self.note_positions[key_index],note.y),YELLOW)
             else:
                 print("error")
         return score
@@ -433,8 +444,101 @@ class menu:
         screen.fill((0, 0, 0))  # 清空畫面
         pygame.display.flip()
         pygame.time.wait(500)  # 等待 0.5 秒，準備開始遊戲
+class GameControl:
+    @staticmethod
+    def GameStart(gameRuning,score,FPS,running):
+        score.load_music()
+        score.start_music()
+        # 按鍵對應的 X 位置
+        note_positions = {
+            0: 180,  # D
+            1: 360,  # F
+            2: 540,  # J
+            3: 720   # K
+        }
+        ####----------------------------------------------初始化-----------------------
+        # 遊戲變數
+        notes = []
+        note_width = 100  # 每個音符的寬度
+        # 創建 HitResultManager
+        hit_result_manager = HitResultManager(font)
+        #HitCircleEffect創建
+        hitCircleEffectManager = HitCircleEffectManager()
+        #ComboEffectManager創建
+        comboEffectManager = ComboEffectManager(font)
+        # 創建判定線
+        judgment_line = JudgmentLine('note.png')
+        #note_manager創建
+        note_manager = NoteManager(note_positions, score.scaled_image,hit_result_manager,hitCircleEffectManager,comboEffectManager) 
+        # 分數
+        score_value = 0
+        #score_font創建
+        score_font = Score_Font(font_size=36, font_color=WHITE, position=(WIDTH - 10, 10))
+        # 按鍵音效
+        hit_sounds = pygame.mixer.Sound('pop.mp3')
+        # SoundManager創建
+        soundManager = SoundManager(hit_sounds)
+        
+        local_note_data = copy.copy(score.note_data)
+        while gameRuning:
+            screen.fill(BLACK)
+
+    # 處理事件
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running[0] = False
+                    return
+        # 玩家鍵盤判定 (D, F, J, K)
+                if event.type == pygame.KEYDOWN:
+                    if event.key in [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k]:
+                        print("Keydown")
+                        i = [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k].index(event.key)
+                        get_value = note_manager.check_hit(i, judgment_line)
+                        soundManager.play() #播放音效
+                        if get_value != -1: #如果是有效鍵位
+                            score_value += get_value
+                            score_font.update_score(get_value)
+                    if(event.key in [pygame.K_p]):
+                        GameControl.GameEnd(score,current_time)
+                        return
+    # 獲取當前時間
+            current_time = pygame.mixer.music.get_pos()
+
+    # 音符生成
+            for note_info in local_note_data[:]:
+                note_time, position, speed = note_info
+                if current_time >= note_time:  # 如果當前時間達到了音符的出現時間
+                    note_manager.input_note(note_time, position, speed)
+                    local_note_data.remove(note_info)  # 移除已經生成的音符
+
+    # 音符更新與繪製
+            note_manager.update_notes()
+            note_manager.draw_notes(screen)
+
+
+    # 繪製判定線
+            judgment_line.draw(screen)
+            # 顯示擊中結果
+            hit_result_manager.update()
+            hit_result_manager.draw(screen)
+            # 顯示擊中反饋
+            hitCircleEffectManager.update()
+            hitCircleEffectManager.draw(screen)
+            # 顯示combo數
+            comboEffectManager.draw(screen)
+            # 顯示分數
+            score_font.draw(screen, WIDTH)
+            # 更新屏幕
+            pygame.display.flip()
+            clock.tick(FPS)
+    @staticmethod
+    def GameEnd(score,current_time):
+        score.End_music()
+            
 #------------------------------------------------------------------
 # 初始化 Pygame
+
+
 
 pygame.init()
 
@@ -452,8 +556,6 @@ YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 
 start_sound = pygame.mixer.Sound('start.mp3')
-selected_difficulty = menu.show_start_menu()
-menu.start_countdown(screen, WIDTH, HEIGHT)
 start_sound.play()
 
 # 時鐘控制
@@ -841,88 +943,23 @@ note_data=[(584.7968578338623, 2, 5),
 (139262.8116130829, 0, 5)
 ]
 # 樂譜初始化
-score = Score('test.mp3', note_data, 'note.png')
-score.load_music()
-score.start_music()
-# 按鍵對應的 X 位置
+
 note_positions = {
     0: 180,  # D
     1: 360,  # F
     2: 540,  # J
     3: 720   # K
 }
-####----------------------------------------------初始化-----------------------
-# 遊戲變數
-notes = []
-note_width = 100  # 每個音符的寬度
-# 創建 HitResultManager
-hit_result_manager = HitResultManager(font)
-#HitCircleEffect創建
-hitCircleEffectManager = HitCircleEffectManager()
-#ComboEffectManager創建
-comboEffectManager = ComboEffectManager(font)
-# 創建判定線
-judgment_line = JudgmentLine('note.png')
-#note_manager創建
-note_manager = NoteManager(note_positions, score.scaled_image,hit_result_manager,hitCircleEffectManager,comboEffectManager) 
-# 分數
-score_value = 0
-#score_font創建
-score_font = Score_Font(font_size=36, font_color=WHITE, position=(WIDTH - 10, 10))
-# 按鍵音效
-hit_sounds = pygame.mixer.Sound('pop.mp3')
-# SoundManager創建
-soundManager = SoundManager(hit_sounds)
+
 ####----------------------------------------------初始化-----------------------
 # 主遊戲循環
-running = True
-start_time = pygame.time.get_ticks()  # 獲取遊戲開始的時間
-
-while running:
-    screen.fill(BLACK)
-
-    # 處理事件
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        # 玩家鍵盤判定 (D, F, J, K)
-        if event.type == pygame.KEYDOWN:
-            if event.key in [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k]:
-                i = [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k].index(event.key)
-                get_value = note_manager.check_hit(i, judgment_line)
-                soundManager.play() #播放音效
-                if get_value != -1: #如果是有效鍵位
-                    score_value += get_value
-                    score_font.update_score(get_value)
-    # 獲取當前時間
-    current_time = pygame.mixer.music.get_pos()
-
-    # 音符生成
-    for note_info in score.note_data:
-        note_time, position, speed = note_info
-        if current_time >= note_time:  # 如果當前時間達到了音符的出現時間
-            note_manager.input_note(note_time, position, speed)
-            score.note_data.remove(note_info)  # 移除已經生成的音符
-
-    # 音符更新與繪製
-    note_manager.update_notes()
-    note_manager.draw_notes(screen)
-
-
-    # 繪製判定線
-    judgment_line.draw(screen)
-    # 顯示擊中結果
-    hit_result_manager.update()
-    hit_result_manager.draw(screen)
-    # 顯示擊中反饋
-    hitCircleEffectManager.update()
-    hitCircleEffectManager.draw(screen)
-    # 顯示combo數
-    comboEffectManager.draw(screen)
-    # 顯示分數
-    score_font.draw(screen, WIDTH)
-    # 更新屏幕
-    pygame.display.flip()
-    clock.tick(FPS)
-
+gameRuning = True
+running = [True]
+while running[0]:
+    selected_difficulty = menu.show_start_menu()
+    menu.start_countdown(screen, WIDTH, HEIGHT)
+    score = Score('test.mp3', note_data, 'note.png')
+    #start_time = pygame.time.get_ticks()  # 獲取遊戲開始的時間
+    GameControl.GameStart(gameRuning,score,FPS,running)
+    #TODO:結束畫面,暫停頁面
 pygame.quit()
