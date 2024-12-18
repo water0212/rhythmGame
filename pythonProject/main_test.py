@@ -452,7 +452,77 @@ class menu:
 
             pygame.display.flip()
             clock.tick(30)
-        
+
+    def show_result_menu(screen, WIDTH, HEIGHT, perfect, great, miss):
+        pygame.init()
+        FONT_TITLE = pygame.font.Font(None, 80)
+        FONT_SCORE = pygame.font.Font(None, 60)
+        FONT_RESULT = pygame.font.Font(None, 50)
+
+        # 顏色
+        WHITE = (255, 255, 255)
+        BLACK = (0, 0, 0)
+        BLUE = (70, 130, 180)
+        LIGHT_BLUE = (135, 206, 250)
+        RED = (255, 69, 0)
+        GRAY = (200, 200, 200)
+        DARK_GRAY = (100, 100, 100)
+
+        clock = pygame.time.Clock()
+        running = True
+
+        # 動畫數據
+        total_score = 0
+        final_score = perfect * 100 + great * 50 + miss * 0
+        score_displayed = 0
+        text_offset = -200
+        glow_alpha = 0
+        glow_increasing = True
+
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+            screen.fill(WHITE)
+
+            # 標題動畫
+            title_surface = FONT_TITLE.render("Game Results", True, BLUE)
+            title_rect = title_surface.get_rect(center=(WIDTH // 2, HEIGHT // 4 + text_offset))
+            screen.blit(title_surface, title_rect)
+            if text_offset < 0:
+                text_offset += 5
+
+            # 分數跳動效果
+            if score_displayed < final_score:
+                score_displayed += min(50, final_score - score_displayed)
+
+            # 顯示分數
+            perfect_surface = FONT_RESULT.render(f"Perfect: {perfect}", True, LIGHT_BLUE)
+            great_surface = FONT_RESULT.render(f"Great: {great}", True, BLUE)
+            miss_surface = FONT_RESULT.render(f"Miss: {miss}", True, RED)
+            score_surface = FONT_SCORE.render(f"Score: {score_displayed}", True, BLACK)
+
+            perfect_rect = perfect_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 80))
+            great_rect = great_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 30))
+            miss_rect = miss_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+            score_rect = score_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))
+
+            screen.blit(perfect_surface, perfect_rect)
+            screen.blit(great_surface, great_rect)
+            screen.blit(miss_surface, miss_rect)
+            screen.blit(score_surface, score_rect)
+
+            # 按鈕
+            if menu.create_button(screen, "Restart", WIDTH // 2 - 150, HEIGHT // 2 + 180, 150, 50, GRAY, DARK_GRAY):
+                return "restart"
+            if menu.create_button(screen, "Quit", WIDTH // 2 + 20, HEIGHT // 2 + 180, 150, 50, GRAY, DARK_GRAY):
+                pygame.quit()
+                exit()
+
+            pygame.display.flip()
+            clock.tick(30)   
     # 新增倒數計時函數
     @staticmethod
     def start_countdown(screen, WIDTH, HEIGHT):
@@ -480,8 +550,12 @@ class menu:
         pygame.display.flip()
         pygame.time.wait(500)  # 等待 0.5 秒，準備開始遊戲
 class GameControl:
+    
     @staticmethod
     def GameStart(gameRuning,score,FPS,running):
+        perfect = 0
+        great = 0
+        miss = 0
         score.load_music()
         score.start_music()
         # 按鍵對應的 X 位置
@@ -529,13 +603,19 @@ class GameControl:
                         print("Keydown")
                         i = [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k].index(event.key)
                         get_value = note_manager.check_hit(i, judgment_line)
+                        if get_value==10:
+                            perfect=perfect+1
+                        elif get_value==5:
+                            great = great +1
+                        elif get_value==0:
+                            miss= miss+1
                         soundManager.play() #播放音效
                         if get_value != -1: #如果是有效鍵位
                             score_value += get_value
                             score_font.update_score(get_value)
                     if(event.key in [pygame.K_p]):
-                        GameControl.GameEnd(score,current_time)
-                        menu.show_stop_menu(screen, WIDTH, HEIGHT)
+                        GameControl.GameEnd(score,current_time, perfect, great, miss)
+                        #menu.show_stop_menu(screen, WIDTH, HEIGHT)
                         return
     # 獲取當前時間
             current_time = pygame.mixer.music.get_pos()
@@ -568,8 +648,10 @@ class GameControl:
             pygame.display.flip()
             clock.tick(FPS)
     @staticmethod
-    def GameEnd(score,current_time):
+    def GameEnd(score,current_time, perfect, great, miss):
         score.End_music()
+        menu.show_result_menu(screen, WIDTH, HEIGHT, perfect, great, miss)
+        
             
 #------------------------------------------------------------------
 # 初始化 Pygame
@@ -989,6 +1071,7 @@ note_positions = {
 
 ####----------------------------------------------初始化-----------------------
 # 主遊戲循環
+
 gameRuning = True
 running = [True]
 while running[0]:
