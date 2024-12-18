@@ -418,6 +418,41 @@ class menu:
             # 更新畫面
             pygame.display.flip()
             clock.tick(30)
+    def show_stop_menu(screen, WIDTH, HEIGHT):
+        FONT = pygame.font.Font(None, 50)
+        WHITE = (255, 255, 255)
+        BLUE = (70, 130, 180)
+        GRAY = (200, 200, 200)
+        DARK_GRAY = (100, 100, 100)
+        clock = pygame.time.Clock()
+
+        running = True
+
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:  # 關閉窗口
+                    pygame.quit()
+                    exit()
+
+            screen.fill(WHITE)
+
+            # 顯示選單標題
+            title_surface = FONT.render("Game Paused", True, BLUE)
+            title_rect = title_surface.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+            screen.blit(title_surface, title_rect)
+
+            # 重新開始按鈕
+            if menu.create_button(screen, "Restart", WIDTH // 2 - 100, HEIGHT // 2 + 20, 200, 50, GRAY, DARK_GRAY):
+                return "restart"
+
+            # 結束遊戲按鈕
+            if menu.create_button(screen, "Quit", WIDTH // 2 - 100, HEIGHT // 2 + 90, 200, 50, GRAY, DARK_GRAY):
+                pygame.quit()
+                exit()
+
+            pygame.display.flip()
+            clock.tick(30)
+        
     # 新增倒數計時函數
     @staticmethod
     def start_countdown(screen, WIDTH, HEIGHT):
@@ -500,6 +535,7 @@ class GameControl:
                             score_font.update_score(get_value)
                     if(event.key in [pygame.K_p]):
                         GameControl.GameEnd(score,current_time)
+                        menu.show_stop_menu(screen, WIDTH, HEIGHT)
                         return
     # 獲取當前時間
             current_time = pygame.mixer.music.get_pos()
