@@ -61,6 +61,9 @@ class NoteManager:
         'J':[],
         'K':[]
         }
+        self.missnum = 0
+        self.greatnum = 0
+        self.perfectnum = 0
         self.key_mapping = ['D', 'F', 'J', 'K'] #對應0 1 2 3
         self.note_positions = note_positions
         self.note_image = note_images
@@ -99,14 +102,17 @@ class NoteManager:
                 note = self.note_columns[column][0]
                 result = judgment_line.check_hit(note.y)  # 判定是否命中
                 if result == 'perfect':
+                    self.perfectnum +=1
                     score += 10  # 完美命中
                     color = (0, 255, 0)
                     self.comboEffectManager.increase_combo()
                 elif result == 'great':
+                    self.greatnum+=1
                     score += 5  # 很好命中
                     color = (255, 255, 0)
                     self.comboEffectManager.increase_combo()
                 elif result == 'miss':
+                    self.missnum+=1
                     score += 0  # 錯過
                     color = (255, 0, 0)
                     self.comboEffectManager.reset_combo()
@@ -115,9 +121,9 @@ class NoteManager:
                 self.note_columns[column].remove(note)
                 self.hit_result_manager.add_result(result, (100, 100), color)
                 self.hitCircleEffectManager.add_effect((self.note_positions[key_index],note.y),YELLOW)
-            else:
-                print("error")
         return score
+    def countHIT(self):
+        return self.perfectnum, self.greatnum, self.missnum
 
 class Score_Font:
     """ 用於顯示右上角分數的模塊 """
@@ -491,7 +497,7 @@ class GameControl:
         # 玩家鍵盤判定 (D, F, J, K)
                 if event.type == pygame.KEYDOWN:
                     if event.key in [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k]:
-                        print("Keydown")
+                        #print("Keydown")
                         i = [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k].index(event.key)
                         get_value = note_manager.check_hit(i, judgment_line)
                         soundManager.play() #播放音效
@@ -502,7 +508,7 @@ class GameControl:
                         GameControl.GameEnd(score,current_time)
                         return
     # 獲取當前時間
-            current_time = pygame.mixer.music.get_pos()
+            current_time = pygame.mixer.music.get_pos() #
 
     # 音符生成
             for note_info in local_note_data[:]:
